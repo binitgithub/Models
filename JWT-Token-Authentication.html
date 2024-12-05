@@ -1,0 +1,307 @@
+###///////////////////////////////////////////////////////appsettings.json
+
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "YourConnectionStringHere"
+  },
+  "JwtSettings": {
+    "SecretKey": "YourSuperSecretKeyHere",
+    "Issuer": "YourIssuer",
+    "Audience": "YourAudience",
+    "ExpirationMinutes": 60
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+
+
+###///////////////////////////////////////////////////////User.cs
+
+public class User
+{
+    public int Id { get; set; }
+    public string Username { get; set; }
+    public string PasswordHash { get; set; }
+    public string Email { get; set; }
+    public ICollection<UserRole> UserRoles { get; set; }
+}
+
+
+###///////////////////////////////////////////////////////Role.cs
+
+public class Role
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public ICollection<UserRole> UserRoles { get; set; }
+}
+
+###///////////////////////////////////////////////////////UserRole.cs
+
+public class UserRole
+{
+    public int UserId { get; set; }
+    public User User { get; set; }
+    public int RoleId { get; set; }
+    public Role Role { get; set; }
+}
+
+
+###///////////////////////////////////////////////////////RegisterUserDto.cs
+
+public class RegisterUserDto
+{
+    public string Username { get; set; }
+    public string Password { get; set; }
+    public string Email { get; set; }
+}
+
+###///////////////////////////////////////////////////////LoginUserDto.cs
+
+public class LoginUserDto
+{
+    public string Username { get; set; }
+    public string Password { get; set; }
+}
+
+###///////////////////////////////////////////////////////MappingProfile.cs
+
+using AutoMapper;
+
+public class MappingProfile : Profile
+{
+    public MappingProfile()
+    {
+        CreateMap<User, RegisterUserDto>().ReverseMap();
+    }
+}
+
+
+###///////////////////////////////////////////////////////AppDbContext.cs
+
+using Microsoft.EntityFrameworkCore;
+
+public class AppDbContext : DbContext
+{
+    public DbSet<User> Users { get; set; }
+    public DbSet<Role> Roles { get; set; }
+    public DbSet<UserRole> UserRoles { get; set; }
+
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<UserRole>()
+            .HasKey(ur => new { ur.UserId, ur.RoleId });
+
+        modelBuilder.Entity<UserRole>()
+            .HasOne(ur => ur.User)
+            .WithMany(u => u.UserRoles)
+            .HasForeignKey(ur => ur.UserId);
+
+        modelBuilder.Entity<UserRole>()
+            .HasOne(ur => ur.Role)
+            .WithMany(r => r.UserRoles)
+            .HasForeignKey(ur => ur.RoleId);
+    }
+}
+
+
+###///////////////////////////////////////////////////////IUserRepository.cs
+
+public interface IUserRepository
+{
+    Task<User> GetUserByUsernameAsync(string username);
+    Task RegisterUserAsync(User user, string password);
+    Task<bool> ValidateUserAsync(string username, string password);
+}
+
+
+###///////////////////////////////////////////////////////UserRepository.cs
+
+using Microsoft.EntityFrameworkCore;
+
+public class UserRepository : IUserRepository
+{
+    private readonly AppDbContext _context;
+
+    public UserRepository(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<User> GetUserByUsernameAsync(string username)
+    {
+        return await _context.Users.Include(u => u.UserRoles)
+                                   .ThenInclude(ur => ur.Role)
+                                   .FirstOrDefaultAsync(u => u.Username == username);
+    }
+
+    public async Task RegisterUserAsync(User user, string password)
+    {
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> ValidateUserAsync(string username, string password)
+    {
+        var user = await GetUserByUsernameAsync(username);
+        return user != null && BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+    }
+}
+
+
+###///////////////////////////////////////////////////////Database Migration
+
+dotnet ef migrations add InitialCreate
+dotnet ef database update
+
+
+###///////////////////////////////////////////////////////JwtService.cs
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+
+public class JwtService
+{
+    private readonly IConfiguration _configuration;
+
+    public JwtService(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
+    public string GenerateJwtToken(User user)
+    {
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new List<Claim>
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Username),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+        };
+
+        claims.AddRange(user.UserRoles.Select(ur => new Claim(ClaimTypes.Role, ur.Role.Name)));
+
+        var token = new JwtSecurityToken(
+            issuer: _configuration["JwtSettings:Issuer"],
+            audience: _configuration["JwtSettings:Audience"],
+            claims: claims,
+            expires: DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["JwtSettings:ExpirationMinutes"])),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}
+
+
+###///////////////////////////////////////////////////////RegisterUserDtoValidator.cs
+
+using FluentValidation;
+
+public class RegisterUserDtoValidator : AbstractValidator<RegisterUserDto>
+{
+    public RegisterUserDtoValidator()
+    {
+        RuleFor(x => x.Username).NotEmpty().MinimumLength(3);
+        RuleFor(x => x.Password).NotEmpty().MinimumLength(6);
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+    }
+}
+
+
+###///////////////////////////////////////////////////////AuthController.cs
+
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+
+[Route("api/[controller]")]
+[ApiController]
+public class AuthController : ControllerBase
+{
+    private readonly IUserRepository _userRepository;
+    private readonly JwtService _jwtService;
+    private readonly IMapper _mapper;
+
+    public AuthController(IUserRepository userRepository, JwtService jwtService, IMapper mapper)
+    {
+        _userRepository = userRepository;
+        _jwtService = jwtService;
+        _mapper = mapper;
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register(RegisterUserDto registerDto)
+    {
+        var user = _mapper.Map<User>(registerDto);
+        await _userRepository.RegisterUserAsync(user, registerDto.Password);
+        return Ok();
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(LoginUserDto loginDto)
+    {
+        if (!await _userRepository.ValidateUserAsync(loginDto.Username, loginDto.Password))
+            return Unauthorized();
+
+        var user = await _userRepository.GetUserByUsernameAsync(loginDto.Username);
+        var token = _jwtService.GenerateJwtToken(user);
+        return Ok(new { Token = token });
+    }
+}
+
+
+###///////////////////////////////////////////////////////Program.cs
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<JwtService>();
+
+builder.Services.AddAutoMapper(typeof(Program));
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]))
+    };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("RequireSuperAdminRole", policy => policy.RequireRole("SuperAdmin"));
+});
+
+var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();

@@ -1,0 +1,202 @@
+###//////////////////////////////////////////////////////////////
+
+public class Lead
+{
+    public int LeadId { get; set; }
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public string Phone { get; set; }
+    public string Status { get; set; } // e.g., New, Qualified, Converted
+    public DateTime CreatedDate { get; set; }
+    public DateTime? ConvertedDate { get; set; }
+
+    public virtual ICollection<Task> Tasks { get; set; }
+    public virtual ICollection<Activity> Activities { get; set; }
+}
+
+###//////////////////////////////////////////////////////////////
+public class Contact
+{
+    public int ContactId { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public string Email { get; set; }
+    public string Phone { get; set; }
+    public string Position { get; set; }
+
+    public int AccountId { get; set; }
+    public virtual Account Account { get; set; }
+
+    public virtual ICollection<Deal> Deals { get; set; }
+    public virtual ICollection<Task> Tasks { get; set; }
+    public virtual ICollection<Activity> Activities { get; set; }
+}
+
+###//////////////////////////////////////////////////////////////
+
+public class Account
+{
+    public int AccountId { get; set; }
+    public string AccountName { get; set; }
+    public string Industry { get; set; }
+    public string Website { get; set; }
+    public string Phone { get; set; }
+
+    public virtual ICollection<Contact> Contacts { get; set; }
+    public virtual ICollection<Deal> Deals { get; set; }
+    public virtual ICollection<Task> Tasks { get; set; }
+    public virtual ICollection<Activity> Activities { get; set; }
+}
+
+###//////////////////////////////////////////////////////////////
+
+public class Deal
+{
+    public int DealId { get; set; }
+    public string DealName { get; set; }
+    public decimal Amount { get; set; }
+    public string Stage { get; set; } // e.g., Prospecting, Negotiation, Closed-Won
+    public DateTime CloseDate { get; set; }
+
+    public int AccountId { get; set; }
+    public virtual Account Account { get; set; }
+
+    public int ContactId { get; set; }
+    public virtual Contact Contact { get; set; }
+
+    public virtual ICollection<Task> Tasks { get; set; }
+    public virtual ICollection<Activity> Activities { get; set; }
+}
+
+###//////////////////////////////////////////////////////////////
+
+public class Apptask
+{
+    public int TaskId { get; set; }
+    public string Title { get; set; }
+    public string Description { get; set; }
+    public DateTime DueDate { get; set; }
+    public bool IsCompleted { get; set; }
+
+    public int? LeadId { get; set; }
+    public virtual Lead Lead { get; set; }
+
+    public int? ContactId { get; set; }
+    public virtual Contact Contact { get; set; }
+
+    public int? AccountId { get; set; }
+    public virtual Account Account { get; set; }
+
+    public int? DealId { get; set; }
+    public virtual Deal Deal { get; set; }
+}
+
+###//////////////////////////////////////////////////////////////
+
+public class Activity
+{
+    public int ActivityId { get; set; }
+    public string Type { get; set; } // e.g., Call, Meeting, Email
+    public string Subject { get; set; }
+    public DateTime ActivityDate { get; set; }
+
+    public int? LeadId { get; set; }
+    public virtual Lead Lead { get; set; }
+
+    public int? ContactId { get; set; }
+    public virtual Contact Contact { get; set; }
+
+    public int? AccountId { get; set; }
+    public virtual Account Account { get; set; }
+
+    public int? DealId { get; set; }
+    public virtual Deal Deal { get; set; }
+}
+
+###//////////////////////////////////////////////////////////////
+
+public class Campaign
+{
+    public int CampaignId { get; set; }
+    public string CampaignName { get; set; }
+    public string Type { get; set; } // e.g., Email, Social Media
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public decimal Budget { get; set; }
+    public decimal ActualCost { get; set; }
+
+    public virtual ICollection<Activity> Activities { get; set; }
+}
+
+###//////////////////////////////////////////////////////////////
+
+public class Email
+{
+    public int EmailId { get; set; }
+    public string Subject { get; set; }
+    public string Body { get; set; }
+    public DateTime SentDate { get; set; }
+
+    public int? ContactId { get; set; }
+    public virtual Contact Contact { get; set; }
+
+    public int? DealId { get; set; }
+    public virtual Deal Deal { get; set; }
+}
+
+###//////////////////////////////////////////////////////////////
+
+public class Quote
+{
+    public int QuoteId { get; set; }
+    public string QuoteNumber { get; set; }
+    public decimal TotalAmount { get; set; }
+    public DateTime ValidUntil { get; set; }
+
+    public int DealId { get; set; }
+    public virtual Deal Deal { get; set; }
+}
+
+
+###//////////////////////////////////////////////////////////////
+
+public class Invoice
+{
+    public int InvoiceId { get; set; }
+    public string InvoiceNumber { get; set; }
+    public decimal TotalAmount { get; set; }
+    public DateTime InvoiceDate { get; set; }
+    public DateTime DueDate { get; set; }
+
+    public int DealId { get; set; }
+    public virtual Deal Deal { get; set; }
+}
+
+
+
+###//////////////////////////////////////////////////////////////
+
+public class CrmDbContext : DbContext
+{
+    public DbSet<Lead> Leads { get; set; }
+    public DbSet<Contact> Contacts { get; set; }
+    public DbSet<Account> Accounts { get; set; }
+    public DbSet<Deal> Deals { get; set; }
+    public DbSet<Task> Tasks { get; set; }
+    public DbSet<Activity> Activities { get; set; }
+    public DbSet<Campaign> Campaigns { get; set; }
+    public DbSet<Email> Emails { get; set; }
+    public DbSet<Quote> Quotes { get; set; }
+    public DbSet<Invoice> Invoices { get; set; }
+
+    public CrmDbContext(DbContextOptions<CrmDbContext> options) : base(options)
+    {
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // Define any specific configurations or relationships here
+
+        base.OnModelCreating(modelBuilder);
+    }
+}

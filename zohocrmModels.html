@@ -1,0 +1,351 @@
+public class Account
+    {
+        [Key]
+        public int AccountId { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string AccountName { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string AccountNumber { get; set; }
+
+        [Required]
+        [Precision(18, 4)] // Specify precision and scale
+        public decimal? Balance { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string AccountType { get; set; }  // e.g., "Savings", "Checking", "Business"
+
+        public bool IsActive { get; set; } = true; // Default to true, meaning active
+
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+        public DateTime? LastUpdatedDate { get; set; }
+
+        public string Currency { get; set; } = "USD"; // Default to USD
+        
+    }
+	
+	public class Activity
+    {
+        [Key]
+        public int ActivityId { get; set; } // Unique identifier for the activity
+
+        [Required]
+        [StringLength(200)]
+        public string ActivityName { get; set; } // Name or title of the activity
+
+        [StringLength(500)]
+        public string Description { get; set; } // Description or details of the activity
+
+        public DateTime ActivityDate { get; set; } // Date and time when the activity occurred
+
+        [Required]
+        public string ActivityType { get; set; } // Type of activity (e.g., "Exercise", "Meeting", "Purchase")
+
+        [Required]
+        public string Status { get; set; } // Status of the activity (e.g., "Completed", "Pending", "Cancelled")
+
+        public int UserId { get; set; } // Foreign key for the user performing the activity
+
+        public DateTime CreatedDate { get; set; } = DateTime.Now; // Date when the activity was logged
+
+        public DateTime? LastUpdatedDate { get; set; } // Nullable field to track the last updated date
+
+        public bool IsArchived { get; set; } = false; // Flag indicating whether the activity is archived (default is false)
+        
+    }
+	 
+	 public class Apptask
+    {
+        [Key]
+        public int ApptaskId { get; set; } // Unique identifier for the task
+
+        [Required]
+        [StringLength(200)]
+        public string TaskName { get; set; } // Name or title of the task
+
+        [StringLength(500)]
+        public string Description { get; set; } // Description or details of the task
+
+        public DateTime DueDate { get; set; } // Task due date
+
+        public DateTime? CompletedDate { get; set; } // Nullable, the date when the task was completed
+
+        [Required]
+        public string Priority { get; set; } // Priority of the task (e.g., "Low", "Medium", "High")
+
+        [Required]
+        public string Status { get; set; } // Status of the task (e.g., "Pending", "In Progress", "Completed")
+
+        public int AssignedToUserId { get; set; } // Foreign key for the user assigned to the task
+
+        public DateTime CreatedDate { get; set; } = DateTime.Now; // Task creation date
+
+        public DateTime? LastUpdatedDate { get; set; } // Nullable field to track the last updated date
+
+        public bool IsArchived { get; set; } = false; // Boolean flag to mark the task as archived (default is false)
+        
+    }
+	
+	public class Campaign
+    {
+        [Key]
+        public int CampaignId { get; set; } // Unique identifier for the campaign
+
+        [Required]
+        [StringLength(200)]
+        public string CampaignName { get; set; } // Name or title of the campaign
+
+        [StringLength(500)]
+        public string Description { get; set; } // Description or details about the campaign
+
+        public DateTime StartDate { get; set; } // The start date of the campaign
+
+        public DateTime EndDate { get; set; } // The end date of the campaign
+
+        [Required]
+        public string Status { get; set; } // Status of the campaign (e.g., "Active", "Completed", "Pending")
+        [Precision(18, 4)] // Specify precision and scale
+        public decimal? Budget { get; set; } // Budget allocated for the campaign
+        [Precision(18, 4)] // Specify precision and scale
+        public decimal? AmountSpent { get; set; } // Amount spent so far on the campaign
+
+        public int TargetAudienceId { get; set; } // Foreign key for the target audience (could link to another model, e.g., Audience)
+
+        public DateTime CreatedDate { get; set; } = DateTime.Now; // The date when the campaign was created
+
+        public DateTime? LastUpdatedDate { get; set; } // Nullable field to track the last updated date
+
+        public bool IsArchived { get; set; } = false; // Flag indicating whether the campaign is archived
+        
+    }
+	
+	public class Contact
+    {
+    [Key]
+    public int ContactId { get; set; }
+
+    [Required, StringLength(100)]
+    public string FirstName { get; set; }
+
+    [Required, StringLength(100)]
+    public string LastName { get; set; }
+
+    [EmailAddress, StringLength(200)]
+    public string Email { get; set; }
+
+    [Phone, StringLength(15)]
+    public string PhoneNumber { get; set; }
+
+    [StringLength(250)]
+    public string Address { get; set; }
+
+    [StringLength(100)]
+    public string City { get; set; }
+
+    [StringLength(100)]
+    public string State { get; set; }
+
+    [StringLength(20)]
+    public string ZipCode { get; set; }
+
+    [StringLength(100)]
+    public string Country { get; set; }
+
+    [StringLength(500)]
+    public string Notes { get; set; }
+
+    public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+    public DateTime? LastUpdatedDate { get; set; }
+    public ICollection<Lead> Leads { get; set; }
+    }
+	public class Deal
+    {
+    [Key]
+    public int Id { get; set; }
+
+    [Required, StringLength(200)]
+    public string DealName { get; set; }
+
+    [Required]
+    [Precision(18, 4)] // Specify precision and scale
+    public decimal DealAmount { get; set; }
+
+    public DateTime DealStartDate { get; set; } = DateTime.Now;
+
+    public DateTime? DealEndDate { get; set; }
+
+    [Required]
+    public string Status { get; set; }
+
+    public int AccountId { get; set; }
+    public Account Account { get; set; }
+
+    [StringLength(500)]
+    public string Description { get; set; }
+
+    [Required]
+    public int CreatedBy { get; set; }
+
+    public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+    public DateTime? LastUpdatedDate { get; set; }
+   
+    }
+	
+	public class Email
+    {
+        [Key]
+        public int EmailId { get; set; } // Unique identifier for the email record
+
+        [Required]
+        [EmailAddress]
+        [StringLength(255)]
+        public string From { get; set; } // Sender email address
+
+        [Required]
+        [EmailAddress]
+        [StringLength(255)]
+        public string To { get; set; } // Recipient email address
+
+        [StringLength(255)]
+        public string Cc { get; set; } // Carbon Copy (Optional)
+
+        [StringLength(255)]
+        public string Bcc { get; set; } // Blind Carbon Copy (Optional)
+
+        [Required]
+        [StringLength(500)]
+        public string Subject { get; set; } // Subject of the email
+
+        [Required]
+        public string Body { get; set; } // Body content of the email
+
+        public DateTime SentDate { get; set; } // Date and time when the email was sent
+
+        public bool IsRead { get; set; } = false; // Boolean indicating whether the email has been read
+
+        public bool IsArchived { get; set; } = false; // Boolean indicating whether the email is archived
+
+        public string AttachmentUrls { get; set; } // A comma-separated string or JSON to store URLs of attachments (optional)
+
+        public DateTime CreatedDate { get; set; } = DateTime.Now; // Date when the email record was created
+
+        public DateTime? LastUpdatedDate { get; set; } // Nullable field to track the last updated date
+        
+    }
+	
+	public class Invoice
+    {
+        [Key]
+        public int InvoiceId { get; set; } // Unique identifier for the invoice
+
+        [Required]
+        public int CustomerId { get; set; } // Foreign key for the customer to whom the invoice is billed
+
+        [Required]
+        public DateTime IssueDate { get; set; } // The date when the invoice is generated
+
+        [Required]
+        public DateTime DueDate { get; set; } // The due date for payment
+
+        [Required]
+        [Precision(18, 4)] // Specify precision and scale
+        public decimal TotalAmount { get; set; } // Total amount of the invoice (after applying discounts, taxes, etc.)
+
+        [Required]
+        [Precision(18, 4)] // Specify precision and scale
+        public decimal AmountPaid { get; set; } // Amount that has been paid (can be 0 initially)
+        
+        [Precision(18, 4)] // Specify precision and scale
+        public decimal AmountDue { get; set; } // Amount that is still due (calculated as TotalAmount - AmountPaid)
+
+        [StringLength(500)]
+        public string Description { get; set; } // Optional description of the invoice (e.g., details of services/products billed)
+
+        public string Status { get; set; } // Status of the invoice, e.g., "Paid", "Unpaid", "Partially Paid", "Overdue"
+
+        public int SalesRepId { get; set; } // Foreign key for the sales representative who generated the invoice
+
+        public string TermsAndConditions { get; set; } // Optional field for the terms and conditions of the invoice
+
+        public DateTime CreatedDate { get; set; } = DateTime.Now; // The date when the invoice record was created
+
+        public DateTime? LastUpdatedDate { get; set; } // Nullable field to track the last updated date
+
+        public bool IsArchived { get; set; } = false; // Boolean flag indicating whether the invoice is archived (default is false)
+       
+    }
+	
+	public class Lead
+    {
+    [Key]
+    public int LeadId { get; set; }
+
+    [Required, StringLength(100)]
+    public string FirstName { get; set; }
+
+    [Required, StringLength(100)]
+    public string LastName { get; set; }
+
+    [Required, EmailAddress]
+    public string Mail { get; set; }
+
+    [Phone]
+    public string PhoneNumber { get; set; }
+
+    [StringLength(250)]
+    public string Company { get; set; }
+
+    [StringLength(500)]
+    public string Notes { get; set; }
+
+    [Required]
+    public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+    public DateTime? LastContactDate { get; set; }
+
+    public bool IsQualified { get; set; } = false;
+
+    }
+	
+	public class Quote
+    {
+        [Key]
+        public int QuoteId { get; set; } // Unique identifier for the quote
+
+        [Required]
+        public int CustomerId { get; set; } // Foreign key for the customer to whom the quote is given
+
+        [Required]
+        [StringLength(255)]
+        public string QuoteDescription { get; set; } // Description or details of the quote
+        [Precision(18, 4)] // Specify precision and scale
+        public decimal TotalAmount { get; set; } // The total amount of the quote
+
+        [Required]
+        public DateTime IssueDate { get; set; } // The date when the quote was issued
+
+        [Required]
+        public DateTime ExpiryDate { get; set; } // The expiration date of the quote
+
+        public string Status { get; set; } // Status of the quote, e.g., "Pending", "Approved", "Expired"
+
+        public int SalesRepId { get; set; } // Foreign key for the sales representative handling the quote
+
+        [StringLength(500)]
+        public string TermsAndConditions { get; set; } // Optional field for the terms and conditions of the quote
+
+        public bool IsConvertedToOrder { get; set; } = false; // Flag indicating if the quote has been converted to an order
+
+        public DateTime CreatedDate { get; set; } = DateTime.Now; // The date when the quote was created
+
+        public DateTime? LastUpdatedDate { get; set; } // Nullable field to track the last updated date
+        
+        
+    }

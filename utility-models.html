@@ -1,0 +1,114 @@
+public class UtilityType
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+}
+
+
+public class Utility
+{
+    public int Id { get; set; }
+    public int UtilityTypeId { get; set; }
+    public string AccountNumber { get; set; }
+    public decimal CurrentReading { get; set; }
+    public decimal PreviousReading { get; set; }
+    public DateTime ReadingDate { get; set; }
+    public decimal AmountDue { get; set; }
+    
+    public UtilityType UtilityType { get; set; }
+}
+
+
+public class Customer
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Address { get; set; }
+    public string Email { get; set; }
+    public string Phone { get; set; }
+    
+    public ICollection<Utility> Utilities { get; set; }
+}
+
+
+public class UtilityTypeDTO
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+}
+
+
+public class UtilityDTO
+{
+    public int Id { get; set; }
+    public int UtilityTypeId { get; set; }
+    public string AccountNumber { get; set; }
+    public decimal CurrentReading { get; set; }
+    public decimal PreviousReading { get; set; }
+    public DateTime ReadingDate { get; set; }
+    public decimal AmountDue { get; set; }
+    public UtilityTypeDTO UtilityType { get; set; }
+}
+
+
+public class CustomerDTO
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Address { get; set; }
+    public string Email { get; set; }
+    public string Phone { get; set; }
+    public ICollection<UtilityDTO> Utilities { get; set; }
+}
+
+
+
+using Microsoft.EntityFrameworkCore;
+
+public class UtilitiesDbContext : DbContext
+{
+    public UtilitiesDbContext(DbContextOptions<UtilitiesDbContext> options) : base(options) { }
+
+    public DbSet<UtilityType> UtilityTypes { get; set; }
+    public DbSet<Utility> Utilities { get; set; }
+    public DbSet<Customer> Customers { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // Configure UtilityType entity
+        modelBuilder.Entity<UtilityType>()
+            .HasKey(ut => ut.Id);
+        
+        modelBuilder.Entity<UtilityType>()
+            .Property(ut => ut.Name)
+            .IsRequired()
+            .HasMaxLength(100);
+
+        // Configure Utility entity
+        modelBuilder.Entity<Utility>()
+            .HasKey(u => u.Id);
+        
+        modelBuilder.Entity<Utility>()
+            .HasOne(u => u.UtilityType)
+            .WithMany()
+            .HasForeignKey(u => u.UtilityTypeId);
+
+        // Configure Customer entity
+        modelBuilder.Entity<Customer>()
+            .HasKey(c => c.Id);
+        
+        modelBuilder.Entity<Customer>()
+            .Property(c => c.Name)
+            .IsRequired()
+            .HasMaxLength(200);
+
+        modelBuilder.Entity<Customer>()
+            .HasMany(c => c.Utilities)
+            .WithOne()
+            .HasForeignKey(u => u.CustomerId);
+
+        // Seed data, constraints, or additional configurations can be added here
+    }
+}
